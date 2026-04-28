@@ -45,10 +45,13 @@ def login():
         password = request.form["password"]
 
         conn = get_connection()
+        cursor = conn.cursor()
 
-        docente = conn.execute("""
-            SELECT * FROM docentes WHERE usuario = ?
-        """, (usuario,)).fetchone()
+        cursor.execute("""
+            SELECT * FROM docentes WHERE usuario = %s
+        """, (usuario,))
+
+        docente = cursor.fetchone()
 
         conn.close()
 
@@ -79,7 +82,7 @@ def register():
         try:
             conn.execute("""
                 INSERT INTO docentes (usuario, password)
-                VALUES (?, ?)
+                VALUES (%s, %s)
             """, (usuario, hash_password))
             conn.commit()
         except:
@@ -112,10 +115,15 @@ def escuelas():
     docente_id = session.get("docente_id")
 
     conn = get_connection()
-    escuelas = conn.execute(
-        "SELECT * FROM escuelas WHERE docente_id = ?",
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT * FROM escuelas WHERE docente_id = %s",
         (docente_id,)
-    ).fetchall()
+    )
+
+    escuelas = cursor.fetchall()
+
     conn.close()
 
     return render_template("escuelas.html", escuelas=escuelas)
@@ -126,10 +134,13 @@ def add_escuela():
     docente_id = session.get("docente_id")
 
     conn = get_connection()
-    conn.execute(
-        "INSERT INTO escuelas (nombre, docente_id) VALUES (?, ?)",
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "INSERT INTO escuelas (nombre, docente_id) VALUES (%s, %s)",
         (nombre, docente_id)
     )
+
     conn.commit()
     conn.close()
 
@@ -138,38 +149,66 @@ def add_escuela():
 @app.route("/delete_escuela/<int:id>")
 def delete_escuela(id):
     conn = get_connection()
-    conn.execute("DELETE FROM escuelas WHERE id = ?", (id,))
-    conn.execute("DELETE FROM cursos WHERE escuela_id = ?", (id,))
+    cursor = conn.cursor()
+
+    # ⚠️ primero borrar cursos (por FK)
+    cursor.execute(
+        "DELETE FROM cursos WHERE escuela_id = %s",
+        (id,)
+    )
+
+    cursor.execute(
+        "DELETE FROM escuelas WHERE id = %s",
+        (id,)
+    )
+
     conn.commit()
     conn.close()
+
     return redirect("/escuelas")
 
 @app.route("/edit_escuela/<int:id>", methods=["GET", "POST"])
 def edit_escuela(id):
     conn = get_connection()
+    cursor = conn.cursor()
 
     if request.method == "POST":
         nombre = request.form["nombre"]
-        conn.execute("UPDATE escuelas SET nombre = ? WHERE id = ?", (nombre, id))
+
+        cursor.execute(
+            "UPDATE escuelas SET nombre = %s WHERE id = %s",
+            (nombre, id)
+        )
+
         conn.commit()
         conn.close()
         return redirect("/escuelas")
 
-    escuela = conn.execute("SELECT * FROM escuelas WHERE id = ?", (id,)).fetchone()
+    cursor.execute(
+        "SELECT * FROM escuelas WHERE id = %s",
+        (id,)
+    )
+
+    escuela = cursor.fetchone()
+
     conn.close()
+
     return render_template("edit_escuela.html", escuela=escuela)
 
 @app.route("/cursos_por_escuela/<int:escuela_id>")
 def cursos_por_escuela(escuela_id):
     conn = get_connection()
+    cursor = conn.cursor()
 
-    cursos = conn.execute("""
-        SELECT * FROM cursos WHERE escuela_id = ?
-    """, (escuela_id,)).fetchall()
+    cursor.execute("""
+        SELECT * FROM cursos WHERE escuela_id = %s
+    """, (escuela_id,))
+
+    cursos = cursor.fetchall()
 
     conn.close()
 
-    return jsonify([dict(c) for c in cursos])
+    return jsonify(cursos)
 
 # ------------------ CURSOS ------------------
 
@@ -178,8 +217,10 @@ def cursos():
     docente_id = session.get("docente_id")
 
     conn = get_connection()
+    cursor = conn.cursor()
 
-    cursos = conn.execute("""
+    # 👇 CURSOS
+    cursor.execute("""
         SELECT 
             cursos.id, 
             cursos.nombre, 
@@ -187,13 +228,15 @@ def cursos():
             escuelas.nombre as escuela
         FROM cursos
         JOIN escuelas ON cursos.escuela_id = escuelas.id
-        WHERE cursos.docente_id = ?
-    """, (docente_id,)).fetchall()
+        WHERE cursos.docente_id = %s
+    """, (docente_id,))
+    cursos = cursor.fetchall()
 
-    escuelas = conn.execute(
-        "SELECT * FROM escuelas WHERE docente_id = ?",
-        (docente_id,)
-    ).fetchall()
+    # 👇 ESCUELAS
+    cursor.execute("""
+        SELECT * FROM escuelas WHERE docente_id = %s
+    """, (docente_id,))
+    escuelas = cursor.fetchall()
 
     conn.close()
 
@@ -210,10 +253,13 @@ def add_curso():
         return redirect("/cursos")
 
     conn = get_connection()
-    conn.execute(
-        "INSERT INTO cursos (nombre, escuela_id, docente, docente_id) VALUES (?, ?, ?, ?)",
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "INSERT INTO cursos (nombre, escuela_id, docente, docente_id) VALUES (%s, %s, %s, %s)",
         (nombre, escuela_id, docente, docente_id)
     )
+
     conn.commit()
     conn.close()
 
@@ -226,32 +272,42 @@ def alumnos():
     docente_id = session.get("docente_id")
 
     conn = get_connection()
+    cursor = conn.cursor()
 
-    alumnos = conn.execute("""
-    SELECT alumnos.*, 
-           cursos.nombre AS curso,
-           cursos.escuela_id,
-           escuelas.nombre AS escuela
-    FROM alumnos
-    LEFT JOIN cursos ON alumnos.curso_id = cursos.id
-    LEFT JOIN escuelas ON cursos.escuela_id = escuelas.id
-    WHERE alumnos.docente_id = ?
-    ORDER BY escuelas.nombre, cursos.nombre
-    """, (docente_id,)).fetchall()
+    # 👇 ALUMNOS
+    cursor.execute("""
+        SELECT alumnos.*, 
+               cursos.nombre AS curso,
+               cursos.escuela_id,
+               escuelas.nombre AS escuela
+        FROM alumnos
+        LEFT JOIN cursos ON alumnos.curso_id = cursos.id
+        LEFT JOIN escuelas ON cursos.escuela_id = escuelas.id
+        WHERE alumnos.docente_id = %s
+        ORDER BY escuelas.nombre, cursos.nombre
+    """, (docente_id,))
+    alumnos = cursor.fetchall()
 
-    cursos = conn.execute(
-        "SELECT * FROM cursos WHERE docente_id = ?",
-        (docente_id,)
-    ).fetchall()
+    # 👇 CURSOS
+    cursor.execute("""
+        SELECT * FROM cursos WHERE docente_id = %s
+    """, (docente_id,))
+    cursos = cursor.fetchall()
 
-    escuelas = conn.execute(
-        "SELECT * FROM escuelas WHERE docente_id = ?",
-        (docente_id,)
-    ).fetchall()
+    # 👇 ESCUELAS
+    cursor.execute("""
+        SELECT * FROM escuelas WHERE docente_id = %s
+    """, (docente_id,))
+    escuelas = cursor.fetchall()
 
     conn.close()
 
-    return render_template("alumnos.html", alumnos=alumnos, cursos=cursos, escuelas=escuelas)
+    return render_template(
+        "alumnos.html",
+        alumnos=alumnos,
+        cursos=cursos,
+        escuelas=escuelas
+    )
 
 @app.route("/add_alumno", methods=["POST"])
 def add_alumno():
@@ -266,9 +322,11 @@ def add_alumno():
     generar_qr(qr_code, qr_code, nombre, apellido, dni)
 
     conn = get_connection()
-    conn.execute("""
+    cursor = conn.cursor()
+
+    cursor.execute("""
         INSERT INTO alumnos (nombre, apellido, dni, sexo, curso_id, qr_code, docente_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
     """, (nombre, apellido, dni, sexo, curso_id, qr_code, docente_id))
 
     conn.commit()
@@ -282,19 +340,26 @@ def imprimir_qr_escuela(escuela_id):
     docente_id = session.get("docente_id")
 
     conn = get_connection()
+    cursor = conn.cursor()
 
-    alumnos = conn.execute("""
+    # 🔍 alumnos de esa escuela y de ese docente
+    cursor.execute("""
         SELECT alumnos.*, cursos.nombre AS curso
         FROM alumnos
         JOIN cursos ON alumnos.curso_id = cursos.id
-        WHERE cursos.escuela_id = ?
-        AND alumnos.docente_id = ?
-    """, (escuela_id, docente_id)).fetchall()
+        WHERE cursos.escuela_id = %s
+        AND alumnos.docente_id = %s
+    """, (escuela_id, docente_id))
 
-    escuela = conn.execute(
-        "SELECT * FROM escuelas WHERE id = ? AND docente_id = ?",
+    alumnos = cursor.fetchall()
+
+    # 🔍 datos de la escuela (seguridad por docente)
+    cursor.execute(
+        "SELECT * FROM escuelas WHERE id = %s AND docente_id = %s",
         (escuela_id, docente_id)
-    ).fetchone()
+    )
+
+    escuela = cursor.fetchone()
 
     conn.close()
 
@@ -326,12 +391,15 @@ def registrar_asistencia():
         return jsonify({"success": False, "error": "Datos incompletos"})
 
     conn = get_connection()
+    cursor = conn.cursor()
 
     # 🔍 buscar alumno
-    alumno = conn.execute("""
+    cursor.execute("""
         SELECT * FROM alumnos 
-        WHERE qr_code = ? AND curso_id = ?
-    """, (qr, curso_id)).fetchone()
+        WHERE qr_code = %s AND curso_id = %s
+    """, (qr, curso_id))
+
+    alumno = cursor.fetchone()
 
     if not alumno:
         conn.close()
@@ -341,18 +409,21 @@ def registrar_asistencia():
     hora = datetime.now().strftime("%H:%M:%S")
 
     # 🔥 evitar duplicados en ESTA sesión
-    existe = conn.execute("""
+    cursor.execute("""
         SELECT * FROM asistencias
-        WHERE alumno_id = ? 
-        AND fecha = ? 
-        AND session_id = ?
-    """, (alumno["id"], hoy, session_id)).fetchone()
+        WHERE alumno_id = %s 
+        AND fecha = %s 
+        AND session_id = %s
+    """, (alumno["id"], hoy, session_id))
+
+    existe = cursor.fetchone()
 
     if not existe:
-        conn.execute("""
+        cursor.execute("""
             INSERT INTO asistencias (alumno_id, fecha, estado, hora, session_id)
-            VALUES (?, ?, 'presente', ?, ?)
+            VALUES (%s, %s, 'presente', %s, %s)
         """, (alumno["id"], hoy, hora, session_id))
+
         conn.commit()
 
     conn.close()
@@ -408,12 +479,15 @@ def registrar_tarde():
         return jsonify({"success": False, "error": "Sesión no iniciada"})
 
     conn = get_connection()
+    cursor = conn.cursor()
 
-    # 🔍 buscar alumno (IMPORTANTE: solo por QR primero)
-    alumno = conn.execute("""
+    # 🔍 buscar alumno (solo por QR)
+    cursor.execute("""
         SELECT * FROM alumnos 
-        WHERE qr_code = ?
-    """, (qr,)).fetchone()
+        WHERE qr_code = %s
+    """, (qr,))
+
+    alumno = cursor.fetchone()
 
     if not alumno:
         conn.close()
@@ -428,27 +502,29 @@ def registrar_tarde():
     hora = datetime.now().strftime("%H:%M:%S")
 
     # 🔍 buscar si ya existe en ESTA sesión
-    existe = conn.execute("""
+    cursor.execute("""
         SELECT * FROM asistencias
-        WHERE alumno_id = ?
-        AND fecha = ?
-        AND session_id = ?
-    """, (alumno["id"], hoy, session_id)).fetchone()
+        WHERE alumno_id = %s
+        AND fecha = %s
+        AND session_id = %s
+    """, (alumno["id"], hoy, session_id))
+
+    existe = cursor.fetchone()
 
     if existe:
         # 🔁 actualizar a tarde
-        conn.execute("""
+        cursor.execute("""
             UPDATE asistencias
-            SET estado = 'tarde', hora = ?
-            WHERE alumno_id = ?
-            AND fecha = ?
-            AND session_id = ?
+            SET estado = 'tarde', hora = %s
+            WHERE alumno_id = %s
+            AND fecha = %s
+            AND session_id = %s
         """, (hora, alumno["id"], hoy, session_id))
     else:
         # 🆕 insertar directamente como tarde
-        conn.execute("""
+        cursor.execute("""
             INSERT INTO asistencias (alumno_id, fecha, estado, hora, session_id)
-            VALUES (?, ?, 'tarde', ?, ?)
+            VALUES (%s, %s, 'tarde', %s, %s)
         """, (alumno["id"], hoy, hora, session_id))
 
     conn.commit()
@@ -460,7 +536,6 @@ def registrar_tarde():
         "apellido": alumno["apellido"],
         "estado": "tarde"
     })
-
 # from flask import session, redirect, render_template
 
 @app.route("/afh")
@@ -487,17 +562,21 @@ def cerrar_jornada():
         return redirect("/")
 
     conn = get_connection()
+    cursor = conn.cursor()
+
     hoy = datetime.now().strftime("%Y-%m-%d")
 
     # 📊 obtener datos SOLO de esta sesión
-    datos = conn.execute("""
+    cursor.execute("""
         SELECT alumnos.nombre, alumnos.apellido, alumnos.dni, alumnos.sexo, asistencias.estado
         FROM asistencias
         JOIN alumnos ON alumnos.id = asistencias.alumno_id
-        WHERE fecha = ?
-        AND alumnos.curso_id = ?
-        AND asistencias.session_id = ?
-    """, (hoy, curso_id, session_id)).fetchall()
+        WHERE fecha = %s
+        AND alumnos.curso_id = %s
+        AND asistencias.session_id = %s
+    """, (hoy, curso_id, session_id))
+
+    datos = cursor.fetchall()
 
     conn.close()
 
@@ -517,16 +596,15 @@ def cerrar_jornada():
             d["estado"]
         ])
 
-    # 🔥 nombre dinámico (muy recomendable)
+    # 🔥 nombre dinámico
     archivo = f"asistencia_{hoy}.xlsx"
     wb.save(archivo)
 
-    # 🧹 limpiar sesión COMPLETA (esto reemplaza los globals)
+    # 🧹 limpiar sesión
     session.clear()
 
     # ⬇ descargar archivo
     return send_file(archivo, as_attachment=True)
-# ------------------ RESULTADO ------------------
 
 @app.route("/resultado/<int:curso_id>")
 def resultado(curso_id):
@@ -544,22 +622,28 @@ def resultado(curso_id):
         return redirect(f"/resultado/{curso_sesion}")
 
     conn = get_connection()
+    cursor = conn.cursor()
+
     hoy = datetime.now().strftime("%Y-%m-%d")
 
     # ✅ presentes SOLO de ESTA sesión
-    presentes = conn.execute("""
+    cursor.execute("""
         SELECT alumnos.*, asistencias.estado
         FROM asistencias
         JOIN alumnos ON alumnos.id = asistencias.alumno_id
-        WHERE fecha = ? 
-        AND alumnos.curso_id = ?
-        AND asistencias.session_id = ?
-    """, (hoy, curso_id, session_id)).fetchall()
+        WHERE fecha = %s 
+        AND alumnos.curso_id = %s
+        AND asistencias.session_id = %s
+    """, (hoy, curso_id, session_id))
+
+    presentes = cursor.fetchall()
 
     # ✅ todos los alumnos del curso
-    todos = conn.execute("""
-        SELECT * FROM alumnos WHERE curso_id = ?
-    """, (curso_id,)).fetchall()
+    cursor.execute("""
+        SELECT * FROM alumnos WHERE curso_id = %s
+    """, (curso_id,))
+
+    todos = cursor.fetchall()
 
     # ✅ calcular ausentes correctamente
     presentes_ids = [p["id"] for p in presentes]
@@ -585,16 +669,21 @@ def exportar():
         return redirect("/")
 
     conn = get_connection()
+    cursor = conn.cursor()
+
     hoy = datetime.now().strftime("%Y-%m-%d")
 
-    datos = conn.execute("""
+    # 📊 obtener datos de asistencia SOLO de esta sesión
+    cursor.execute("""
         SELECT alumnos.nombre, alumnos.apellido, alumnos.dni, alumnos.sexo, asistencias.estado
         FROM asistencias
         JOIN alumnos ON alumnos.id = asistencias.alumno_id
-        WHERE fecha = ? 
-        AND alumnos.curso_id = ?
-        AND asistencias.session_id = ?
-    """, (hoy, curso_id, session_id)).fetchall()
+        WHERE fecha = %s 
+        AND alumnos.curso_id = %s
+        AND asistencias.session_id = %s
+    """, (hoy, curso_id, session_id))
+
+    datos = cursor.fetchall()
 
     conn.close()
 
@@ -614,7 +703,7 @@ def exportar():
             d["estado"]
         ])
 
-    # 🔥 nombre dinámico (evita sobrescribir)
+    # 🔥 nombre dinámico
     archivo = f"asistencia_{hoy}.xlsx"
     wb.save(archivo)
 
