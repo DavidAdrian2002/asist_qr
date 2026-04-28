@@ -1,79 +1,69 @@
-import sqlite3
+import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
-DB_PATH = "database/db.sqlite3"
-
+DATABASE_URL = os.getenv("postgresql://asistencia_db_4etu_user:fWGISPPJQ4LAng6ZHYDxDAeL3QNyzG9G@dpg-d7od29l8nd3s738rj9i0-a/asistencia_db_4etu")
 
 def get_connection():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
     return conn
-
 
 def init_db():
     conn = get_connection()
     cursor = conn.cursor()
 
-    # DOCENTES
+    # ================== TABLA DOCENTES ==================
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS docentes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         usuario TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL
     )
     """)
 
-    # ESCUELAS
+    # ================== TABLA ESCUELAS ==================
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS escuelas (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         nombre TEXT NOT NULL,
-        docente_id INTEGER,
-        FOREIGN KEY(docente_id) REFERENCES docentes(id) ON DELETE CASCADE
+        docente_id INTEGER REFERENCES docentes(id)
     )
     """)
 
-    # CURSOS
+    # ================== TABLA CURSOS ==================
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS cursos (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         nombre TEXT,
         docente TEXT,
-        escuela_id INTEGER,
-        docente_id INTEGER,
-        FOREIGN KEY(escuela_id) REFERENCES escuelas(id) ON DELETE CASCADE,
-        FOREIGN KEY(docente_id) REFERENCES docentes(id) ON DELETE CASCADE
+        escuela_id INTEGER REFERENCES escuelas(id),
+        docente_id INTEGER REFERENCES docentes(id)
     )
     """)
 
-    # ALUMNOS
+    # ================== TABLA ALUMNOS ==================
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS alumnos (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         nombre TEXT NOT NULL,
         apellido TEXT NOT NULL,
-        dni TEXT,
+        dni TEXT UNIQUE,
         sexo TEXT,
-        curso_id INTEGER,
+        curso_id INTEGER REFERENCES cursos(id),
         qr_code TEXT,
-        docente_id INTEGER,
-        FOREIGN KEY(curso_id) REFERENCES cursos(id) ON DELETE CASCADE,
-        FOREIGN KEY(docente_id) REFERENCES docentes(id) ON DELETE CASCADE,
-        UNIQUE(dni, docente_id)
+        docente_id INTEGER REFERENCES docentes(id)
     )
     """)
 
-    # ASISTENCIAS
+    # ================== TABLA ASISTENCIAS ==================
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS asistencias (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        alumno_id INTEGER,
+        id SERIAL PRIMARY KEY,
+        alumno_id INTEGER REFERENCES alumnos(id),
         fecha TEXT,
         estado TEXT,
         hora TEXT,
-        session_id TEXT,
-        docente_id INTEGER,
-        FOREIGN KEY(alumno_id) REFERENCES alumnos(id) ON DELETE CASCADE,
-        FOREIGN KEY(docente_id) REFERENCES docentes(id) ON DELETE CASCADE
+        session_id TEXT
     )
     """)
 

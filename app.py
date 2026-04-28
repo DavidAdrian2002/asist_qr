@@ -7,6 +7,7 @@ from openpyxl import Workbook
 from flask import session
 from werkzeug.security import generate_password_hash, check_password_hash
 
+init_db()
 app = Flask(__name__)
 app.secret_key = "clave_super_secreta_123"
 
