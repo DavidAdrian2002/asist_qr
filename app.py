@@ -7,13 +7,16 @@ from openpyxl import Workbook
 from flask import session
 from werkzeug.security import generate_password_hash, check_password_hash
 
+
+app = Flask(__name__)
+app.secret_key = "clave_super_secreta_123"
+
 @app.before_request
 def inicializar_db():
     if not hasattr(app, "db_initialized"):
         init_db()
         app.db_initialized = True
-app = Flask(__name__)
-app.secret_key = "clave_super_secreta_123"
+
 
 # asistencia_activa = True
 # curso_actual = None
