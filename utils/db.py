@@ -2,11 +2,15 @@ import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
-DATABASE_URL = os.getenv("postgresql://asistencia_db_4etu_user:fWGISPPJQ4LAng6ZHYDxDAeL3QNyzG9G@dpg-d7od29l8nd3s738rj9i0-a/asistencia_db_4etu")
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+# 🔥 FIX para Render (postgres:// → postgresql://)
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 def get_connection():
-    conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
-    return conn
+    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+
 
 def init_db():
     conn = get_connection()
