@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Imprimir QR</title>
+
+    <style>
+        body {
+            font-family: Arial;
+        }
+
+        .grid {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .card {
+            width: 200px;
+            border: 1px solid #000;
+            margin: 10px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        @media print {
+            button {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<h2>QR de alumnos</h2>
+
+<button onclick="window.print()">🖨 Imprimir todo</button>
+
+<div class="grid">
+    {% for a in alumnos %}
+    <div class="card">
+        <strong>{{ a["nombre"] }} {{ a["apellido"] }}</strong><br>
+        <img src="/static/qr/{{ a['qr_code'] }}.png" width="120">
+    </div>
+    {% endfor %}
+</div>
+
+</body>
+</html>

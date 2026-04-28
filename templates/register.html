@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Registro</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+</head>
+<body class="bg-gradient-to-br from-green-500 to-blue-600 h-screen flex items-center justify-center">
+
+<div class="bg-white p-8 rounded-2xl shadow-2xl w-96">
+
+    <h2 class="text-3xl font-bold text-center mb-6 text-gray-700">
+        📝 Crear cuenta
+    </h2>
+
+    {% if error %}
+    <div class="bg-red-100 text-red-600 p-2 rounded mb-3 text-center">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="POST">
+
+        <input type="text" name="usuario" placeholder="Usuario"
+        class="w-full p-3 mb-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400" required>
+
+        <input type="password" name="password" placeholder="Contraseña"
+        class="w-full p-3 mb-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" required>
+
+        <button class="w-full bg-green-500 text-white p-3 rounded-lg hover:bg-green-600 transition">
+            Registrarse
+        </button>
+
+    </form>
+
+    <p class="text-center mt-4 text-sm">
+        ¿Ya tenés cuenta?
+        <a href="/login" class="text-blue-500 hover:underline">Ingresar</a>
+    </p>
+
+</div>
+
+</body>
+</html>

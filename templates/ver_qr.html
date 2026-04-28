@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>QR Alumno</title>
+
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial;
+        }
+
+        .card {
+            border: 1px solid #000;
+            display: inline-block;
+            padding: 20px;
+            margin-top: 40px;
+        }
+
+        @media print {
+            button {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h3>{{ alumno["nombre"] }} {{ alumno["apellido"] }}</h3>
+    <p>DNI: {{ alumno["dni"] }}</p>
+
+    <img src="/static/qr/{{ alumno['qr_code'] }}.png" width="200">
+</div>
+
+<br><br>
+
+<button onclick="window.print()">🖨 Imprimir</button>
+
+</body>
+</html>

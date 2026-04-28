@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h3 class="text-center mb-3">📊 Resultado de asistencia</h3>
+
+<!-- ================= RESUMEN ================= -->
+<div class="card p-3 mb-3 text-center shadow-sm">
+
+    <div class="row">
+
+        <div class="col-6">
+            <h5>👨 Varones</h5>
+            <h4>{{ presentes | selectattr("sexo", "equalto", "M") | list | length }}</h4>
+        </div>
+
+        <div class="col-6">
+            <h5>👩 Mujeres</h5>
+            <h4>{{ presentes | selectattr("sexo", "equalto", "F") | list | length }}</h4>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ================= PRESENTES ================= -->
+<h5 class="text-success">✔ Presentes ({{ presentes|length }})</h5>
+
+{% for p in presentes %}
+<div class="card p-2 mb-2">
+
+    <div class="d-flex justify-content-between align-items-center">
+
+        <div>
+            <strong>{{ p["nombre"] }} {{ p["apellido"] }}</strong><br>
+            <small>DNI: {{ p["dni"] }}</small><br>
+
+            {% if p["sexo"] == "M" %}
+                <span class="badge bg-primary">👨 Varón</span>
+            {% else %}
+                <span class="badge bg-pink text-dark">👩 Mujer</span>
+            {% endif %}
+        </div>
+
+        <div>
+            {% if p['estado'] == 'tarde' %}
+                <span class="badge bg-warning text-dark">⏱ CR</span>
+            {% else %}
+                <span class="badge bg-success">✔</span>
+            {% endif %}
+        </div>
+
+    </div>
+
+</div>
+{% endfor %}
+
+<!-- ================= AUSENTES ================= -->
+<h5 class="text-danger mt-3">❌ Ausentes ({{ ausentes|length }})</h5>
+
+{% for a in ausentes %}
+<div class="card p-2 mb-2">
+
+    <div>
+        <strong>{{ a["nombre"] }} {{ a["apellido"] }}</strong><br>
+        <small>DNI: {{ a["dni"] }}</small><br>
+
+        {% if a["sexo"] == "M" %}
+            <span class="badge bg-primary">👨 Varón</span>
+        {% else %}
+            <span class="badge bg-pink text-dark">👩 Mujer</span>
+        {% endif %}
+    </div>
+
+</div>
+{% endfor %}
+
+<!-- ================= ACCIONES ================= -->
+<div class="mt-3">
+
+    <a href="/afh" class="btn btn-warning w-100 mb-2">
+        ⏱ Registrar tardanza (AFH)
+    </a>
+
+    <a href="/exportar" class="btn btn-success w-100 mb-2">
+        📥 Descargar Excel
+    </a>
+
+    <a href="/cerrar_jornada" class="btn btn-dark w-100">
+        🔒 Cerrar jornada
+    </a>
+
+</div>
+
+<!-- ================= MENSAJE FINAL ================= -->
+{% if ausentes|length == 0 %}
+<div class="alert alert-success mt-3 text-center">
+    ✔ Asistencia completa
+</div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h5 class="text-center mb-4 fw-bold">Panel principal</h5>
+
+<div class="d-grid gap-3">
+
+    <a href="/escuelas" class="btn btn-primary p-3 shadow-sm">
+        🏫 Escuelas
+    </a>
+
+    <a href="/cursos" class="btn btn-success p-3 shadow-sm">
+        📚 Cursos
+    </a>
+
+    <a href="/alumnos" class="btn btn-warning p-3 shadow-sm">
+        👨‍🎓 Alumnos
+    </a>
+
+    <a href="/seleccionar_curso" class="btn btn-danger p-3 shadow-sm">
+        📷 Tomar asistencia
+    </a>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h5 class="text-center fw-bold mb-3">📷 Escanear asistencia</h5>
+
+<!-- CONTADORES -->
+<div class="row text-center mb-3 g-2">
+    <div class="col-6">
+        <div class="card p-3 shadow-sm border-0">
+            <small class="text-muted">Varones</small>
+            <h2 id="varones" class="fw-bold text-primary">0</h2>
+        </div>
+    </div>
+    <div class="col-6">
+        <div class="card p-3 shadow-sm border-0">
+            <small class="text-muted">Mujeres</small>
+            <h2 id="mujeres" class="fw-bold text-danger">0</h2>
+        </div>
+    </div>
+</div>
+
+<!-- SCANNER CARD -->
+<div class="card shadow-sm p-2 mb-3">
+
+    <div id="reader"></div>
+
+</div>
+
+<!-- MENSAJE -->
+<div id="msg" class="text-center fw-bold"></div>
+
+<!-- LISTA -->
+<div class="card shadow-sm mt-3">
+    <div class="card-body p-2">
+
+        <h6 class="text-center text-muted mb-2">📋 Asistencia registrada</h6>
+
+        <ul id="lista" class="list-group list-group-flush"></ul>
+
+    </div>
+</div>
+
+<!-- BOTÓN FINALIZAR -->
+<div class="d-grid mt-3">
+    <a href="/finalizar" class="btn btn-danger btn-lg shadow-sm">
+        ⛔ Finalizar asistencia
+    </a>
+</div>
+
+<!-- ESTILO EXTRA -->
+<style>
+#reader {
+    width: 100%;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+#msg {
+    min-height: 30px;
+    margin-top: 5px;
+}
+</style>
+
+<!-- LIBRERÍA -->
+<script src="https://unpkg.com/html5-qrcode" defer></script>
+
+<!-- PASAR CURSO -->
+<script>
+    const CURSO_ID = {{ curso_id | tojson }};
+</script>
+
+<!-- SCANNER -->
+<script src="/static/js/qr-scanner.js" defer></script>
+
+{% endblock %}

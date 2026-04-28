@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h3 class="text-center mb-3">📷 Seleccionar curso</h3>
+
+<div class="row">
+
+    {% for c in cursos %}
+    <div class="col-12 mb-3">
+
+        <div class="card p-3 shadow-sm">
+
+            <h5 class="mb-1">📚 {{ c["nombre"] }}</h5>
+
+            <p class="mb-2">
+                🏫 {{ c["escuela"] }}
+            </p>
+
+            <div class="d-grid">
+                <a href="{{ url_for('escaner', curso_id=c['id']) }}"
+                   class="btn btn-primary">
+                    📷 Tomar asistencia
+                </a>
+            </div>
+
+        </div>
+
+    </div>
+    {% endfor %}
+
+</div>
+
+{% endblock %}

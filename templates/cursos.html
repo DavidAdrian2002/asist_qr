@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h3 class="mb-3 text-center">📚 Cursos</h3>
+
+<!-- ================= FORMULARIO ================= -->
+<form method="POST" action="/add_curso" class="mb-4">
+
+    <div class="card p-3 shadow-sm">
+
+        <h5 class="mb-3">➕ Crear nuevo curso</h5>
+
+        <div class="row g-2">
+
+            <!-- Curso -->
+            <div class="col-12 col-md-4">
+                <label class="form-label">Curso</label>
+                <input type="text" name="nombre" class="form-control" placeholder="Ej: 3° A" required>
+            </div>
+
+            <!-- Escuela -->
+            <div class="col-12 col-md-4">
+                <label class="form-label">Escuela</label>
+                <select name="escuela_id" class="form-control" required>
+                    <option value="">Seleccionar escuela</option>
+                    {% for e in escuelas %}
+                    <option value="{{ e['id'] }}">{{ e['nombre'] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Docente -->
+            <div class="col-12 col-md-4">
+                <label class="form-label">👨‍🏫 Docente</label>
+                <input type="text" name="docente" class="form-control" placeholder="Nombre del docente" required>
+            </div>
+
+        </div>
+
+        <button class="btn btn-success w-100 mt-3">
+            ✔ Agregar curso
+        </button>
+
+    </div>
+
+</form>
+
+<!-- ================= LISTADO (MOBILE-FIRST) ================= -->
+<div class="row">
+
+    {% for c in cursos %}
+    <div class="col-12 mb-3">
+
+        <div class="card p-3">
+
+            <h5 class="mb-2">📚 {{ c["nombre"] }}</h5>
+
+            <p class="mb-0">
+                🏫 <strong>{{ c["escuela"] }}</strong><br>
+                👨‍🏫 
+                <span class="badge bg-info text-dark">
+                    {{ c["docente"] if c["docente"] else "Sin docente asignado" }}
+                </span>
+            </p>
+
+        </div>
+
+    </div>
+    {% endfor %}
+
+</div>
+
+{% endblock %}

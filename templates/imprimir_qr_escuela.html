@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>QR Escuela</title>
+    <style>
+        body { text-align:center; font-family: Arial; }
+
+        .qr {
+            display:inline-block;
+            margin:10px;
+            padding:10px;
+            border:1px solid #000;
+        }
+
+        @media print {
+            button { display:none; }
+        }
+    </style>
+</head>
+<body>
+
+<h2>🏫 {{ escuela["nombre"] }}</h2>
+
+{% for a in alumnos %}
+<div class="qr">
+    <p>{{ a["nombre"] }} {{ a["apellido"] }}</p>
+    <img src="/static/qr/{{ a['qr_code'] }}.png" width="120">
+</div>
+{% endfor %}
+
+<br><br>
+<button onclick="window.print()">🖨 Imprimir</button>
+
+</body>
+</html>
